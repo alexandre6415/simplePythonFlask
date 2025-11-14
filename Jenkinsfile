@@ -29,27 +29,28 @@ podTemplate(containers: [
                 sh "docker stop simple-python-flask-${BUILD_ID}"
                 sh "docker tag simple-python-flask:${BUILD_ID} 192.168.88.20:8082/simple-python-flask:${BUILD_ID}"
             }
-        container('oepnjdk'){
+        } 
+        container('openjdk'){
 
             stage('SonarQube Analysis'){
                 script {
                     def sonarScannerPath = tool 'SonarScanner'
 
                     withSonarQubeEnv ('SonarQube'){
-                        sh "${sonarScannerPath}/bin/sonar-scanner \
-                        -Dsonar.projectkey=courseCatalg -Dsonar.sources=."
+                        sh "${sonarScannerPath}/bin/sonar-scanner -Dsonar.projectKey=courseCatalog -Dsonar.sources=."
                     }
                 }
             }
         }
+
+        container('docker') {
             stage("Push image") {
                 script {
                     docker.withRegistry('http://192.168.88.20:8082', 'jenkins_docker') {
-                        sh 'docker push 192.168.88.20:8082/simple-python-flask:${BUILD_ID}'
+                        sh "docker push 192.168.88.20:8082/simple-python-flask:${BUILD_ID}"
                     }
                 }
             }
-
         }
     }
 }
