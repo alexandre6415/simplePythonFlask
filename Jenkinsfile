@@ -8,7 +8,7 @@ podTemplate(containers: [
             ttyEnabled: true,
             privileged: true
         ),
-        containerTemplate(name: 'openjdk', image: 'openjdk:11', command: 'sleep', args: '99d')],
+        containerTemplate(name: 'openjdk', image: 'openjdk:17', command: 'sleep', args: '99d')],
     volumes: [ hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock') ]
     ){
 
