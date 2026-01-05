@@ -2,13 +2,13 @@ podTemplate(containers: [
         containerTemplate(name: 'maven', image: 'maven:3.8.1-jdk-8', command: 'sleep', args: '99d'),
         containerTemplate(
             name: 'docker',
-            image: 'docker:dind',
+            image: 'docker:latest',
             command: 'sleep',
             args: '99d',
-            ttyEnabled: true,
-            privileged: true
+            ttyEnabled: true
         ),
         containerTemplate(name: 'openjdk', image: 'eclipse-temurin:17-jdk', command: 'sleep', args: '99d')],
+    volumes: [ hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock') ]
     ){
 
     node(POD_LABEL) {
@@ -32,17 +32,21 @@ podTemplate(containers: [
         } 
         container('openjdk'){
 
-    stage('SonarQube Analysis'){
-        script {
-            def sonarScannerPath = tool 'SonarScanner'
+            stage('SonarQube Analysis'){
+                script {
+                    def sonarScannerPath = tool 'SonarScanner'
 
-            withSonarQubeEnv ('SonarQube'){
-                sh "${sonarScannerPath}/bin/sonar-scanner"
+                    withSonarQubeEnv ('SonarQube'){
+                        sh """${sonarScannerPath}/bin/sonar-scanner \
+                            -Dsonar.projectKey=courseCatalog \
+                            -Dsonar.sources=. \
+                            -Dsonar.javascript.enabled=false \
+                            -Dsonar.typescript.enabled=false \
+                            -Dsonar.css.enabled=false"""
+                    }
+                }
             }
         }
-    }
-}
-
 
         container('docker') {
             stage("Push image") {
