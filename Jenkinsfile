@@ -32,19 +32,17 @@ podTemplate(containers: [
         } 
         container('openjdk'){
 
-            stage('SonarQube Analysis'){
-                script {
-                    def sonarScannerPath = tool 'SonarScanner'
+    stage('SonarQube Analysis'){
+        script {
+            def sonarScannerPath = tool 'SonarScanner'
 
-                    withSonarQubeEnv ('SonarQube'){
-                        sh """${sonarScannerPath}/bin/sonar-scanner \
-                            -Dsonar.projectKey=courseCatalog \
-                            -Dsonar.sources=. \
-                            -Dsonar.exclusions=**/*.html,**/*.css,**/*.js,**/*.yaml"""
-                    }
-                }
+            withSonarQubeEnv ('SonarQube'){
+                sh "${sonarScannerPath}/bin/sonar-scanner"
             }
         }
+    }
+}
+
 
         container('docker') {
             stage("Push image") {
