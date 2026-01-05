@@ -5,11 +5,15 @@ podTemplate(containers: [
             image: 'docker:latest',
             command: 'sleep',
             args: '99d',
-            ttyEnabled: true
+            ttyEnabled: true,
+            runAsUser: 0,
+            runAsGroup: 0
         ),
         containerTemplate(name: 'openjdk', image: 'eclipse-temurin:17-jdk', command: 'sleep', args: '99d')],
-    volumes: [ hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock') ]
-    ){
+    volumes: [ 
+        hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')
+    ]
+){
 
     node(POD_LABEL) {
         container('docker') {
@@ -19,7 +23,11 @@ podTemplate(containers: [
             }
 
             stage("Build") {
-                sh "docker build -t simple-python-flask:${BUILD_ID} ."
+                sh """
+                    ls -la /var/run/docker.sock
+                    docker info
+                    docker build -t simple-python-flask:${BUILD_ID} .
+                """
             }
 
             stage("Test") {
