@@ -9,7 +9,6 @@ podTemplate(containers: [
             privileged: true
         ),
         containerTemplate(name: 'openjdk', image: 'eclipse-temurin:17-jdk', command: 'sleep', args: '99d')],
-    volumes: [ hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock') ]
     ){
 
     node(POD_LABEL) {
@@ -24,9 +23,10 @@ podTemplate(containers: [
             }
 
             stage("Test") {
-                sh "docker run -itd --name simple-python-flask-${BUILD_ID} --rm simple-python-flask:${BUILD_ID}"
+                sh "docker run -itd --name simple-python-flask-${BUILD_ID} simple-python-flask:${BUILD_ID}"
                 sh "docker exec simple-python-flask-${BUILD_ID} nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
                 sh "docker stop simple-python-flask-${BUILD_ID}"
+                sh "docker rm simple-python-flask-${BUILD_ID}"
                 sh "docker tag simple-python-flask:${BUILD_ID} 192.168.88.20:8082/simple-python-flask:${BUILD_ID}"
             }
         } 
@@ -37,7 +37,10 @@ podTemplate(containers: [
                     def sonarScannerPath = tool 'SonarScanner'
 
                     withSonarQubeEnv ('SonarQube'){
-                        sh "${sonarScannerPath}/bin/sonar-scanner -Dsonar.projectKey=courseCatalog -Dsonar.sources=."
+                        sh """${sonarScannerPath}/bin/sonar-scanner \
+                            -Dsonar.projectKey=courseCatalog \
+                            -Dsonar.sources=. \
+                            -Dsonar.exclusions=**/*.html,**/*.css,**/*.js,**/*.yaml"""
                     }
                 }
             }
