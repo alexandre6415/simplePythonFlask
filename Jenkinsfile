@@ -65,11 +65,11 @@ podTemplate(
                 }
             }
         }
-        container('kubectl'){\
+        container('kubectl'){
         
             stage('Deploy image'){
-                withkubeConfig([credentialsId: 'k3s-serviceaccount', serverUrl: 'https://192.168.88.30:6433']) {
-                    sh 'apk update && apk add --no-cache curl '
+                withKubeConfig([credentialsId: 'k3s-serviceaccount', serverUrl: 'https://192.168.88.30:6443']) {
+                    sh 'apk update && apk add --no-cache curl'
 
                     sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"'
 
@@ -80,9 +80,8 @@ podTemplate(
                     sh 'kubectl set image deployment/web simplepythonflask=192.168.88.20:8082/simple-python-flask:${BUILD_ID} -n homolog'
 
                     sh 'sleep 5'
+                }
             }
-
         }
     }
-}
 }
