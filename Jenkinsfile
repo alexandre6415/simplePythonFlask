@@ -44,10 +44,7 @@ podTemplate(
                     withSonarQubeEnv ('SonarQube'){
                         sh """${sonarScannerPath}/bin/sonar-scanner \
                             -Dsonar.projectKey=courseCatalog \
-                            -Dsonar.sources=. \
-                            -Dsonar.javascript.enabled=false \
-                            -Dsonar.typescript.enabled=false \
-                            -Dsonar.css.enabled=false"""
+                            -Dsonar.sources=."""
                     }
                 }
             }
