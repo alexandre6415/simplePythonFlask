@@ -1,18 +1,19 @@
-podTemplate(containers: [
+podTemplate(
+    containers: [
         containerTemplate(name: 'maven', image: 'maven:3.8.1-jdk-8', command: 'sleep', args: '99d'),
         containerTemplate(
             name: 'docker',
             image: 'docker:latest',
             command: 'sleep',
             args: '99d',
-            ttyEnabled: true,
-            runAsUser: 0,
-            runAsGroup: 0
+            ttyEnabled: true
         ),
-        containerTemplate(name: 'openjdk', image: 'eclipse-temurin:17-jdk', command: 'sleep', args: '99d')],
+        containerTemplate(name: 'openjdk', image: 'eclipse-temurin:17-jdk', command: 'sleep', args: '99d')
+    ],
     volumes: [ 
         hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')
-    ]
+    ],
+    serviceAccount: 'default'
 ){
 
     node(POD_LABEL) {
@@ -24,8 +25,12 @@ podTemplate(containers: [
 
             stage("Build") {
                 sh """
-                    ls -la /var/run/docker.sock
-                    docker info
+                    echo "=== DEBUG ==="
+                    whoami
+                    id
+                    ls -la /var/run/ || echo "No /var/run/"
+                    ls -la /var/run/docker.sock || echo "No docker.sock"
+                    echo "=== END DEBUG ==="
                     docker build -t simple-python-flask:${BUILD_ID} .
                 """
             }
