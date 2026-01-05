@@ -3,7 +3,7 @@ podTemplate(
         containerTemplate(name: 'maven', image: 'maven:3.8.1-jdk-8', command: 'sleep', args: '99d'),
         containerTemplate(
             name: 'docker',
-            image: 'docker:latest',
+            image: 'docker:20.10',
             command: 'sleep',
             args: '99d',
             ttyEnabled: true
@@ -24,19 +24,11 @@ podTemplate(
             }
 
             stage("Build") {
-                sh """
-                    echo "=== DEBUG ==="
-                    whoami
-                    id
-                    ls -la /var/run/ || echo "No /var/run/"
-                    ls -la /var/run/docker.sock || echo "No docker.sock"
-                    echo "=== END DEBUG ==="
-                    docker build -t simple-python-flask:${BUILD_ID} .
-                """
+                sh "docker build -t simple-python-flask:${BUILD_ID} ."
             }
 
             stage("Test") {
-                sh "docker run -itd --name simple-python-flask-${BUILD_ID} simple-python-flask:${BUILD_ID}"
+                sh "docker run -d --name simple-python-flask-${BUILD_ID} simple-python-flask:${BUILD_ID}"
                 sh "docker exec simple-python-flask-${BUILD_ID} nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
                 sh "docker stop simple-python-flask-${BUILD_ID}"
                 sh "docker rm simple-python-flask-${BUILD_ID}"
