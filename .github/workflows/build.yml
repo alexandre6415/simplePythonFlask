@@ -1,0 +1,44 @@
+name: "Containe Image Build"
+
+on:
+  push:
+    branches:
+      - main
+    schedules:
+      - cron: '0 1 * * *'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: "Checkout Repo"
+        uses: actions/checkout@v4
+      - name: Login REGISTRY
+        uses: docker/login-actions
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Extrair metadata action"
+        id: metadado
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      - name: "Build and push Docker image"
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ steps.metadado.outputs.tags }}
+          labels: ${{ steps.metadado.outputs.labels }}
