@@ -2,8 +2,8 @@ name: "CI/CD - Teste"
 
 on:
   pull_requests:
-  branches:
-    - "*"
+    branches:
+      - "*"
 
 env:
   IMAGE_NAME: ci-cd-demo
