@@ -8,34 +8,34 @@ on:
 env:
   IMAGE_NAME: ci-cd-demo
 
-  jobs:
-    test:
-      name: "Teste de aplicação"
-      runs-on: ubuntu-latest
-      permissions:
-        contents: read
-        issues: read
-        checks: write
-        pull-requests: write
-      strategy:
-        matrix:
-          container:
-          - "docker.io/python:3.12.1-bullseye"
-          - "docker.io/python:3.11.9-bullseye"
-          - "docker.io/python:3.10.14-bullseye"
-      container: 
-        image: ${{ matrix.container }}
-      steps:
-        - uses: actions/checkout@v4
-        - name: "Apt get"
-          run: apt update && apt install -y python3-mysqldb libmariadb-dev gcc
-        - name: "Install pip deps"
-          run: pip install -r requirements.txt
-        - name: "Run tests"
-          run: nosetests --with-xunit --with-coverage --cover-package=project test_users.py
-        - name: "Publish Test Results"
-          uses: EnricoMi/publish-unit-test-result-action@v2
-          if: always()
-          with:
-            files: |
-              *.xml
+jobs:
+  test:
+    name: "Teste de aplicação"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      checks: write
+      pull-requests: write
+    strategy:
+      matrix:
+        container:
+        - "docker.io/python:3.12.1-bullseye"
+        - "docker.io/python:3.11.9-bullseye"
+        - "docker.io/python:3.10.14-bullseye"
+    container: 
+      image: ${{ matrix.container }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Apt get"
+        run: apt update && apt install -y python3-mysqldb libmariadb-dev gcc
+      - name: "Install pip deps"
+        run: pip install -r requirements.txt
+      - name: "Run tests"
+        run: nosetests --with-xunit --with-coverage --cover-package=project test_users.py
+      - name: "Publish Test Results"
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: |
+            *.xml
