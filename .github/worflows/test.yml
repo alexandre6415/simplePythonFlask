@@ -1,4 +1,4 @@
-name: "CI/CD - Test"
+name: "CI/CD - Teste"
 
 on:
   pull_requests:
