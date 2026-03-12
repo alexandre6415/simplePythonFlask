@@ -8,6 +8,7 @@ metadata:
   labels:
     io.kompose.service: mariadb
   name: mariadb
+  namespace: homolog
 spec:
   ports:
     - name: "3306"
@@ -17,3 +18,4 @@ spec:
     io.kompose.service: mariadb
 status:
   loadBalancer: {}
+  
