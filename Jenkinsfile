@@ -1,87 +1,70 @@
-podTemplate(
-    containers: [
-        containerTemplate(name: 'maven', image: 'maven:3.8.1-jdk-8', command: 'sleep', args: '99d'),
-        containerTemplate(
-            name: 'docker',
-            image: 'docker:20.10',
-            command: 'sleep',
-            args: '99d',
-            ttyEnabled: true
-        ),
-        containerTemplate(
-            name: 'kubectl',
-            image: 'alpine',
-            command: 'sleep',
-            args: '99d'
-        ),
-        containerTemplate(name: 'openjdk', image: 'eclipse-temurin:17-jdk', command: 'sleep', args: '99d')
-    ],
-    volumes: [ 
-        hostPathVolume(hostPath: '/var/run/docker.sock', mountPath: '/var/run/docker.sock')
-    ],
-    serviceAccount: 'default'
-){
+pipeline {
+    agent any
 
-    node(POD_LABEL) {
-        container('docker') {
+    environment {
+        IMAGE_NAME = "alexandre6415/simplepythonflask"
+        IMAGE_TAG  = "${BUILD_NUMBER}"
+    }
 
-            stage("Clona Git") {
-                git 'http://192.168.88.20:3000/alexandre/simplePythonFlask.git'
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-credentials',
+                    url: 'https://github.com/alexandre6415/simplePythonFlask.git'
             }
+        }
 
-            stage("Build") {
-                sh "docker build -t simple-python-flask:${BUILD_ID} ."
+        stage('Build Image') {
+            steps {
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
+        }
 
-            stage("Test") {
-                sh "docker run -d --name simple-python-flask-${BUILD_ID} simple-python-flask:${BUILD_ID}"
-                sh "docker exec simple-python-flask-${BUILD_ID} nosetests --with-xunit --with-coverage --cover-package=project test_users.py"
-                sh "docker stop simple-python-flask-${BUILD_ID}"
-                sh "docker rm simple-python-flask-${BUILD_ID}"
-                sh "docker tag simple-python-flask:${BUILD_ID} 192.168.88.20:8082/simple-python-flask:${BUILD_ID}"
-            }
-        } 
-        container('openjdk'){
-
-            stage('SonarQube Analysis'){
-                script {
-                    def sonarScannerPath = tool 'SonarScanner'
-
-                    withSonarQubeEnv ('SonarQube'){
-                        sh """${sonarScannerPath}/bin/sonar-scanner \
-                            -Dsonar.projectKey=courseCatalog \
-                            -Dsonar.sources=."""
-                    }
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                        echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+                    """
                 }
             }
         }
 
-        container('docker') {
-            stage("Push image") {
-                script {
-                    docker.withRegistry('http://192.168.88.20:8082', 'jenkins_docker') {
-                        sh "docker push 192.168.88.20:8082/simple-python-flask:${BUILD_ID}"
-                    }
+        stage('Update Manifest') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'github-credentials',
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_TOKEN'
+                )]) {
+                    sh """
+                        git config user.email "jenkins@ci.local"
+                        git config user.name "Jenkins"
+                        git fetch origin gitops
+                        git checkout gitops
+                        sed -i 's|image: alexandre6415/simplepythonflask:.*|image: alexandre6415/simplepythonflask:${IMAGE_TAG}|' manifest/deployment.yaml
+                        git add manifest/deployment.yaml
+                        git commit -m "ci: update image tag to ${IMAGE_TAG}"
+                        git push https://${GIT_USER}:${GIT_TOKEN}@github.com/alexandre6415/simplePythonFlask.git gitops
+                    """
                 }
             }
         }
-        container('kubectl'){
-        
-            stage('Deploy image'){
-                withKubeConfig([credentialsId: 'k3s-serviceaccount', serverUrl: 'https://192.168.88.30:6443']) {
-                    sh 'apk update && apk add --no-cache curl'
+    }
 
-                    sh 'curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"'
-
-                    sh 'chmod +x kubectl && mv kubectl /usr/local/bin/'
-
-                    sh 'sleep 5'
-
-                    sh 'kubectl set image deployment/web simplepythonflask=192.168.88.20:8082/simple-python-flask:${BUILD_ID} -n homolog'
-
-                    sh 'sleep 5'
-                }
-            }
+    post {
+        success {
+            echo "✅ Deploy disparado! ArgoCD vai sincronizar a tag ${IMAGE_TAG}"
+        }
+        failure {
+            echo "❌ Pipeline falhou!"
         }
     }
 }
