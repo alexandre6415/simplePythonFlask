@@ -49,7 +49,7 @@ pipeline {
                         git config user.name "Jenkins"
                         git fetch origin gitops
                         git checkout gitops
-                        sed -i 's|image: ghcr.io/alexandre6415/simplepythonflask:.*|image: alexandre6415/simplepythonflask:${IMAGE_TAG}|' manifest/web-deployment.yaml
+                        sed -i 's|image: .*simplepythonflask:.*|image: alexandre6415/simplepythonflask:${IMAGE_TAG}|' manifest/web-deployment.yaml
                         git add manifest/web-deployment.yaml
                         git commit -m "ci: update image tag to ${IMAGE_TAG}"
                         git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/alexandre6415/simplePythonFlask.git gitops
