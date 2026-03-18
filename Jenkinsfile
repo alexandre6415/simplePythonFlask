@@ -29,10 +29,10 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh """
+                    sh '''
                         echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    """
+                        docker push ''' + "${IMAGE_NAME}:${IMAGE_TAG}" + '''
+                    '''
                 }
             }
         }
@@ -49,10 +49,10 @@ pipeline {
                         git config user.name "Jenkins"
                         git fetch origin gitops
                         git checkout gitops
-                        sed -i 's|image: alexandre6415/simplepythonflask:.*|image: alexandre6415/simplepythonflask:${IMAGE_TAG}|' manifest/deployment.yaml
-                        git add manifest/deployment.yaml
+                        sed -i 's|image: ghcr.io/alexandre6415/simplepythonflask:.*|image: alexandre6415/simplepythonflask:${IMAGE_TAG}|' manifest/web-deployment.yaml
+                        git add manifest/web-deployment.yaml
                         git commit -m "ci: update image tag to ${IMAGE_TAG}"
-                        git push https://${GIT_USER}:${GIT_TOKEN}@github.com/alexandre6415/simplePythonFlask.git gitops
+                        git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/alexandre6415/simplePythonFlask.git gitops
                     """
                 }
             }
