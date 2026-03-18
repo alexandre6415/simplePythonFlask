@@ -19,7 +19,7 @@ spec:
         io.kompose.service: web
     spec:
       containers:
-        - image: ghcr.io/alexandre6415/simplepythonflask:main
+        - image: alexandre6415/simplepythonflask:2
           name: simplepythonflask
           lifecycle:
             postStart:
